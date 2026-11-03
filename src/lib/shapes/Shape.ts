@@ -166,7 +166,8 @@ export abstract class Shape {
     this.transform.x = ncx - (cos * sx * lcx - sin * sy * lcy);
     this.transform.y = ncy - (sin * sx * lcx + cos * sy * lcy);
 
-    this.invalidate();
+    // Always go through markDirty so subclasses clear their own caches too
+    this.markDirty();
   }
 
   setBounds(minX: number, minY: number, maxX: number, maxY: number): void {

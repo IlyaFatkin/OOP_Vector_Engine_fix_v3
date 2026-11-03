@@ -85,6 +85,7 @@ export class Rect extends Shape {
 
     this.w = Math.max(1, Math.abs(pt.x) * 2);
     this.h = Math.max(1, Math.abs(pt.y) * 2);
+    this.markDirty();
   }
 
   toJSON() {

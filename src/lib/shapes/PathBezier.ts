@@ -17,6 +17,7 @@ type CubicSegment = {
 
 export class PathBezier extends Shape {
   points: Point[];
+  private _flatCache: Point[] | null = null;
   mode: PathMode;
   closed: boolean;
   steps: number;
@@ -55,6 +56,7 @@ export class PathBezier extends Shape {
         y: arg1.y,
       };
     }
+    this.markDirty();
   }
 
   addPointLocal(localPt: Point, insertAtIndex?: number): void;
@@ -76,11 +78,13 @@ export class PathBezier extends Shape {
     } else {
       this.points.push(pt);
     }
+    this.markDirty();
   }
 
   removePoint(index: number): void {
     if (index >= 0 && index < this.points.length) {
       this.points.splice(index, 1);
+      this.markDirty();
     }
   }
 
@@ -197,9 +201,16 @@ export class PathBezier extends Shape {
   }
 
   flattenDevicePoints(): Point[] {
-    return this.getApproxLocalPoints().map((p) =>
+    if (this._flatCache) return this._flatCache;
+    this._flatCache = this.getApproxLocalPoints().map((p) =>
       this.transformPointToDevice(p.x, p.y)
     );
+    return this._flatCache;
+  }
+
+  override markDirty(): void {
+    this._flatCache = null;
+    super.markDirty();
   }
 
   drawRaster(r: RasterRenderer) {

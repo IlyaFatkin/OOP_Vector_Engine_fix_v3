@@ -175,3 +175,87 @@ test('curve points are cached until markDirty', () => {
   const p3 = q.flattenDevicePoints()
   expect(p3).not.toBe(p1)
 })
+
+import { Line } from './Line'
+
+test('Rect control point change updates cached bounds without manual markDirty', () => {
+  const r = new Rect(100, 50)
+  r.transform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 }
+  const before = r.getBounds()
+  expect(before.maxX - before.minX).toBeCloseTo(100)
+
+  r.setControlPoint(0, { x: 80, y: 40 }) // w = 160, h = 80
+  const after = r.getBounds()
+  expect(after).not.toBe(before)
+  expect(after.maxX - after.minX).toBeCloseTo(160)
+  expect(after.maxY - after.minY).toBeCloseTo(80)
+})
+
+test('Line control point change updates bounds', () => {
+  const l = new Line(0, 0, 10, 0)
+  const before = l.getLocalBounds()
+  l.setControlPoint(1, 50, 20)
+  const after = l.getLocalBounds()
+  expect(after.maxX).toBeGreaterThan(before.maxX)
+  expect(after.maxX).toBeGreaterThanOrEqual(50)
+})
+
+test('Oval control point change updates bounds', () => {
+  const o = new Oval(20, 10)
+  const before = o.getLocalBounds()
+  o.setControlPoint(0, 40, 0)
+  const after = o.getLocalBounds()
+  expect(after.maxX).toBeCloseTo(40)
+  expect(after.maxX).not.toBeCloseTo(before.maxX)
+})
+
+test('Triangle control point change updates bounds', () => {
+  const t = new Triangle(-30, 20, 40, 20, 0, -30)
+  const before = t.getLocalBounds()
+  t.setControlPoint(1, 80, 20)
+  const after = t.getLocalBounds()
+  expect(after.maxX).toBeCloseTo(80)
+  expect(after.maxX).toBeGreaterThan(before.maxX)
+})
+
+test('PathBezier add/remove/set point updates bounds', () => {
+  const p = new PathBezier([{ x: 0, y: 0 }, { x: 10, y: 0 }], 'polyline')
+  const before = p.getLocalBounds()
+  p.addPointLocal(100, 50)
+  const afterAdd = p.getLocalBounds()
+  expect(afterAdd.maxX).toBeCloseTo(100)
+  expect(afterAdd).not.toBe(before)
+
+  p.setControlPoint(2, 200, 10)
+  const afterSet = p.getLocalBounds()
+  expect(afterSet.maxX).toBeCloseTo(200)
+
+  p.removePoint(2)
+  const afterRemove = p.getLocalBounds()
+  expect(afterRemove.maxX).toBeLessThan(200)
+})
+
+test('Quadratic setBounds refreshes cached device points', () => {
+  const q = new QuadraticBezier(0, 0, 50, 100, 100, 0)
+  q.transform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 }
+  const before = q.flattenDevicePoints()
+  const endBefore = before[before.length - 1]
+  expect(endBefore.x).toBeCloseTo(100)
+
+  // Resize via the public setBounds path (goes through markDirty, not raw invalidate)
+  q.setBounds(0, 0, 200, 100)
+  const after = q.flattenDevicePoints()
+  expect(after).not.toBe(before)
+  const endAfter = after[after.length - 1]
+  expect(endAfter.x).not.toBeCloseTo(endBefore.x)
+})
+
+test('Cubic setBounds refreshes cached device points', () => {
+  const c = new CubicBezier(0, 0, 30, 100, 70, -100, 100, 0)
+  c.transform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 }
+  const before = c.flattenDevicePoints()
+  c.setBounds(0, 0, 300, 150)
+  const after = c.flattenDevicePoints()
+  expect(after).not.toBe(before)
+  expect(after[after.length - 1].x).not.toBeCloseTo(before[before.length - 1].x)
+})

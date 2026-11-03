@@ -113,6 +113,7 @@ export class Triangle extends Shape {
       this.x3 = pt.x;
       this.y3 = pt.y;
     }
+    this.markDirty();
   }
 
   toJSON() {

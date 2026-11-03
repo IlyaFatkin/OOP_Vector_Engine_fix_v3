@@ -98,6 +98,7 @@ export class Line extends Shape {
       this.x2 = pt.x;
       this.y2 = pt.y;
     }
+    this.markDirty();
   }
 
   toJSON() {

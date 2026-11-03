@@ -98,6 +98,7 @@ export class Oval extends Shape {
     if (i === 1 || i === 3) {
       this.ry = Math.max(1, Math.abs(pt.y));
     }
+    this.markDirty();
   }
 
   toJSON() {
